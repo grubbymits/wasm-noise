@@ -39,9 +39,7 @@ function get_colour(n) {
   }
 }
 
-function fbm(x, y, freq, G, octaves, noise2d) {
-  const offset_x = 1;
-  const offset_y = 1;
+function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   let a = 1.0;
   let t = 0.0;
   for (let i = 0; i < octaves; i++) {
@@ -53,7 +51,17 @@ function fbm(x, y, freq, G, octaves, noise2d) {
 }
 
 self.onmessage = function(e) {
-  const { shared_buffer, start_y, height, width, scale, G, num_octaves } = e.data;
+  const {
+    shared_buffer,
+    start_y,
+    height,
+    width,
+    scale,
+    G,
+    num_octaves,
+    offset_x,
+    offset_y,
+  } = e.data;
   const channels = 4;
   const clamped_array = new Uint8ClampedArray(shared_buffer);
   WebAssembly.instantiateStreaming(fetch("../wasm/noise.wasm"), {}).then(
@@ -62,7 +70,7 @@ self.onmessage = function(e) {
     for (let y = start_y; y < start_y + height; ++y) {
       for (let x = 0; x < width; ++x) {
         let pixel = (y * width * channels) + x * channels;
-        let n = fbm(x, y, scale, G, num_octaves, noise);
+        let n = fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
         const colour = get_colour(n);
         clamped_array[pixel] =  colour.r;
         clamped_array[pixel+1] = colour.g;

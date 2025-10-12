@@ -24,29 +24,42 @@
   </div>
   <script type="module">
     import { draw_fbm } from "./js/fbm.mjs";
-    const canvas = document.getElementById('canvas');
+
     let scale = 0.005;
     let H = 0.5;
     let num_octaves = 12;
+    let x = 1;
+    let y = 1;
 
     const hurst_slider = document.getElementById('hurst');
     hurst_slider.addEventListener("input", (event) => {
       H = event.target.value / 100;
-      draw_fbm(canvas, scale, num_octaves, H);
+      draw_fbm(canvas, scale, num_octaves, H, x, y);
     });
 
     const octaves_slider = document.getElementById('octaves');
     octaves_slider.addEventListener("input", (event) => {
       num_octaves = event.target.value;
-      draw_fbm(canvas, scale, num_octaves, H);
+      draw_fbm(canvas, scale, num_octaves, H, x, y);
     });
 
     const scale_slider = document.getElementById('scale');
     scale_slider.addEventListener("input", (event) => {
       scale = event.target.value / 1000;
-      draw_fbm(canvas, scale, num_octaves, H);
+      draw_fbm(canvas, scale, num_octaves, H, x, y);
     });
 
-    draw_fbm(canvas, scale, num_octaves, H);
+    const canvas = document.getElementById('canvas');
+    canvas.addEventListener("mousedown", (e) => {
+      if (e.button == 0) {
+        const dx = e.offsetX * scale - x;
+        const dy = e.offsetY * scale - y;
+        x += dx;
+        y += dy;
+        draw_fbm(canvas, scale, num_octaves, H, x, y);
+      }
+    });
+
+    draw_fbm(canvas, scale, num_octaves, H, x, y);
   </script>
 </body>

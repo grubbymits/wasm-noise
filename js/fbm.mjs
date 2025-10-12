@@ -1,4 +1,4 @@
-export async function draw_fbm(canvas, scale, num_octaves, H) {
+export async function draw_fbm(canvas, scale, num_octaves, H, x, y) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -11,6 +11,10 @@ export async function draw_fbm(canvas, scale, num_octaves, H) {
   const channels = 4;
   const num_bytes = width * height * channels;
   const shared_buffer = new SharedArrayBuffer(num_bytes);
+  const offset_x = Math.max(x, 1);
+  const offset_y = Math.max(y, 1);
+  console.log('x:', offset_x);
+  console.log('y:', offset_y);
 
   const start = performance.now();
   const num_workers = 4;
@@ -28,6 +32,8 @@ export async function draw_fbm(canvas, scale, num_octaves, H) {
         scale,
         G,
         num_octaves,
+        offset_x,
+        offset_y,
       });
       worker.onmessage = function(event){
         resolve(event.data);
