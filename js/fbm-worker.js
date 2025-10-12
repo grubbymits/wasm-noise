@@ -29,9 +29,9 @@ function get_colour(n) {
   } else if (n < -0.15) {
     return sand;
   } else if (n < 0.1) {
-    return light_green;
-  } else if (n < 0.35) {
     return green;
+  } else if (n < 0.35) {
+    return light_green;
   } else if (n < 0.5) {
     return taupe;
   } else {

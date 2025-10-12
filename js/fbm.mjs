@@ -1,11 +1,11 @@
-export async function draw_fbm(canvas) {
+export async function draw_fbm(canvas, scale, num_octaves, H) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
-  const scale = 0.005;
-  const H = 1;
+  console.log('scale:', scale);
+  console.log('octaves:', num_octaves);
+  console.log('hurst exponent:', H);
   const G = Math.pow(2, -H);
-  const num_octaves = 7;
 
   const workers = [];
   const channels = 4;
@@ -44,7 +44,7 @@ export async function draw_fbm(canvas) {
 
     const end = performance.now();
     console.log('time (msec):', end - start);
-    console.log('pixels/msec:', width * height/ end - start);
+    console.log('pixels/msec:', width * height / (end - start));
 
     // Clean up workers
     workers.forEach(worker => worker.terminate());
