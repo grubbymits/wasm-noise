@@ -2,11 +2,10 @@
 
 set -x
 
-clang \
+wasm32-clang \
   --target=wasm32-unknown-unknown \
-  -I /opt/wasi-sdk/share/wasi-sysroot/include/wasm32-wasi \
   -O3 -ffast-math \
-  -msimd128 -relaxed-simd \
+  -msimd128 -mrelaxed-simd \
   -nostdlib \
   -Wl,--no-entry,--export=noise2d \
   ./c/2d.c \
