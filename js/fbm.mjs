@@ -1,4 +1,4 @@
-export async function draw_fbm(canvas, scale, num_octaves, H, x, y) {
+export async function draw_fbm(workers, canvas, scale, num_octaves, H, x, y) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -7,7 +7,6 @@ export async function draw_fbm(canvas, scale, num_octaves, H, x, y) {
   console.log('hurst exponent:', H);
   const G = Math.pow(2, -H);
 
-  const workers = [];
   const channels = 4;
   const num_bytes = width * height * channels;
   const shared_buffer = new SharedArrayBuffer(num_bytes);
@@ -17,13 +16,13 @@ export async function draw_fbm(canvas, scale, num_octaves, H, x, y) {
   console.log('y:', offset_y);
 
   const start = performance.now();
-  const num_workers = 4;
+  const num_workers = workers.length;
 
   const promises = [];
   // Create and start workers
   for (let i = 0; i < num_workers; i++) {
+    const worker = workers[i];
     promises.push(new Promise(function(resolve) {
-      const worker = new Worker(new URL("fbm-worker.js", import.meta.url));
       worker.postMessage({
         shared_buffer,
         start_y: i * (height / num_workers),
@@ -53,6 +52,6 @@ export async function draw_fbm(canvas, scale, num_octaves, H, x, y) {
     console.log('pixels/msec:', width * height / (end - start));
 
     // Clean up workers
-    workers.forEach(worker => worker.terminate());
+    //workers.forEach(worker => worker.terminate());
   });
 }

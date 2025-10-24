@@ -50,7 +50,8 @@ function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t;
 }
 
-self.onmessage = function(e) {
+self.wasm_instance;
+self.onmessage = async function(e) {
   const {
     shared_buffer,
     start_y,
@@ -62,22 +63,26 @@ self.onmessage = function(e) {
     offset_x,
     offset_y,
   } = e.data;
+
+  if (!self.wasm_instance) {
+    console.log('instaniate module for first run');
+    const obj = await WebAssembly.instantiateStreaming(fetch("../wasm/noise.wasm"), {});
+    self.wasm_instance = obj.instance;
+  }
+
   const channels = 4;
   const clamped_array = new Uint8ClampedArray(shared_buffer);
-  WebAssembly.instantiateStreaming(fetch("../wasm/noise.wasm"), {}).then(
-    (obj) => {
-    const noise = obj.instance.exports.noise2d;
-    for (let y = start_y; y < start_y + height; ++y) {
-      for (let x = 0; x < width; ++x) {
-        let pixel = (y * width * channels) + x * channels;
-        let n = fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
-        const colour = get_colour(n);
-        clamped_array[pixel] =  colour.r;
-        clamped_array[pixel+1] = colour.g;
-        clamped_array[pixel+2] = colour.b;
-        clamped_array[pixel+3] = 255;
-      }
+  const noise = self.wasm_instance.exports.noise2d;
+  for (let y = start_y; y < start_y + height; ++y) {
+    for (let x = 0; x < width; ++x) {
+      let pixel = (y * width * channels) + x * channels;
+      let n = fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
+      const colour = get_colour(n);
+      clamped_array[pixel] =  colour.r;
+      clamped_array[pixel+1] = colour.g;
+      clamped_array[pixel+2] = colour.b;
+      clamped_array[pixel+3] = 255;
     }
-    postMessage('done');
-  });
+  }
+  postMessage('done');
 }
