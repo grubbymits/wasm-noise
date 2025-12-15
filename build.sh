@@ -7,7 +7,7 @@ wasm32-clang \
   -O3 -ffast-math \
   -msimd128 -mrelaxed-simd \
   -nostdlib \
-  -Wl,--no-entry,--export=noise2d \
+  -Wl,--no-entry \
   ./c/2d.c \
   -I ./c/ \
   -o wasm/noise.wasm

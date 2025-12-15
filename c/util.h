@@ -51,4 +51,3 @@ inline uint32_t hash(uint32_t h) {
   h = (h ^ (h >> 15)) * 0x735a2d97U;
   return h ^ (h >> 15);
 }
-
