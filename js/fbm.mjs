@@ -6,7 +6,7 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, x, y) {
   console.log('octaves:', num_octaves);
   console.log('hurst exponent:', H);
   const fade = 'none';
-  const fbm_type = 'fbm';
+  const fbm_type = 'ridged';
   console.log('fade:', fade);
   console.log('fbm:', fbm_type);
   const G = Math.pow(2, -H);

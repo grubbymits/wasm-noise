@@ -12,94 +12,89 @@ class RGB {
 
 class Counters {
   constructor() {
-    this.min = Infinity;
-    this.max = -Infinity;
-    this.data = new Array();
-    this.sample_freq = 37;
-    this.sample_counter = 0;
+    this.samples = new Array();
+    this.light_green = new RGB(194, 175, 110);
+    this.dark_blue = new RGB(102, 112, 103);
+    this.light_blue = new RGB(146, 176, 179);
+    this.dark_olive = new RGB(133, 118, 88);
+    this.light_olive = new RGB(168, 157, 117);
+    this.green_brown = new RGB(122, 99, 50);
+    this.light_brown = new RGB(169, 140, 94);
+    this.reddish_brown = new RGB(160, 121, 87);
+    this.green = new RGB(177, 157, 88);
+    this.taupe = new RGB(206, 191, 159);
+    this.sand = new RGB(237, 221, 175);
+    this.white = new RGB(243, 238, 218);
   }
 
   add_sample(n) {
-    if (n < this.min) {
-      this.min = n;
-    }
-    if (n > this.max) {
-      this.max = n;
-    }
-    if (this.sample_counter >= this.sample_freq) {
-      this.data.push(n);
-      this.sample_counter = 0;
+    this.samples.push(n);
+  }
+
+  get_percent_value(pc) {
+    const count = this.samples.length;
+    const index = Math.floor(count * pc);
+    return this.samples[index];
+  };
+
+  choose_colour(n) {
+    const water = 0.15;
+    const sand = 0.20;
+    const trees = 0.60;
+    const grass = 0.70;
+    const rock = 0.80;
+    const snow = 0.95;
+  
+    if (n < this.get_percent_value(water)) {
+      return this.light_blue;
+    } else if (n < this.get_percent_value(sand)) {
+      return this.sand;
+    } else if (n < this.get_percent_value(trees)) {
+      return this.green;
+    } else if (n < this.get_percent_value(rock)) {
+      return this.light_green;
+    } else if (n < this.get_percent_value(snow)) {
+      return this.taupe;
     } else {
-      this.sample_counter++;
+      return this.white;
     }
   }
 
   finish() {
-    console.log('min:', this.min);
-    console.log('max:', this.max);
-    console.log(JSON.stringify(histogram(this.data, 0.2, this.min, this.max)));
-  }
-}
+    // stackoverflow.com/questions/36266895/simple-histogram-algorithm-in-javascript
+    const histogram = function(data, bin_size, min, max) {
+      const bins = Math.ceil((max - min + 1) / bin_size);
+      const histogram = new Array(bins).fill(0);
 
-let counters = new Counters();
+      for (const item of data) {
+        histogram[Math.floor((item - min) / bin_size)]++;
+      }
 
-const light_green = new RGB(194, 175, 110);
-const dark_blue = new RGB(102, 112, 103);
-const light_blue = new RGB(146, 176, 179);
-const dark_olive = new RGB(133, 118, 88);
-const light_olive = new RGB(168, 157, 117);
-const green_brown = new RGB(122, 99, 50);
-const light_brown = new RGB(169, 140, 94);
-const reddish_brown = new RGB(160, 121, 87);
-const green = new RGB(177, 157, 88);
-const taupe = new RGB(206, 191, 159);
-const sand = new RGB(237, 221, 175);
-const white = new RGB(243, 238, 218);
+      return histogram;
+    }
 
-function get_colour(n) {
-  if (n < -0.2) {
-    return light_blue;
-  } else if (n < -0.15) {
-    return sand;
-  } else if (n < 0.1) {
-    return green;
-  } else if (n < 0.35) {
-    return light_green;
-  } else if (n < 0.5) {
-    return taupe;
-  } else {
-    return white;
+    this.samples.sort(function(a, b) { return a - b; });
+    const min = this.samples[0];
+    const max = this.samples[this.samples.length - 1];
+    const count = this.samples.length;
+    console.log('min:', min);
+    console.log('max:', max);
+    console.log(JSON.stringify(histogram(this.samples, 0.1, min, max)));
   }
 }
 
 function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   let a = 1.0;
   let t = 0.0;
+  let total_square_a = 0.0;
+  const lac = Math.pow(Math.LOG2E, 2);
   for (let i = 0; i < octaves; i++) {
     t += a * noise2d(freq * x + offset_x, freq * y + offset_y);
-    freq *= 1.98;
+    freq *= lac;
+    total_square_a += Math.pow(a, 2);
     a *= G;
   }
-  counters.add_sample(t);
-  return get_colour(t);
-}
-
-function get_ridged_colour(n) {
-  // 0 - 4 ?
-
-  if (n < 2.1) {
-    return light_blue;
-  } else if (n < 2.5) {
-    return sand;
-  } else if (n < 2.8) {
-    return green;
-  } else if (n < 3.0) {
-    return light_green;
-  } else if (n < 3.3) {
-    return taupe;
-  } else {
-    return white;
-  }
+  return t /= Math.sqrt(total_square_a);
 }
 
 function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
@@ -107,6 +102,8 @@ function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
   let a = 1.0;
   let t = 0.0;
   let weight = 1.0;
+  let total_square_a = 0.0;
+  const lac = Math.pow(Math.LOG2E, 2);
 
   for (let i = 0; i < octaves; i++) {
     let signal = Math.abs(noise2d(freq * x + offset_x, freq * y + offset_y));
@@ -114,28 +111,15 @@ function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
     signal *= signal;
     signal *= weight;
     t += signal * a;
-    freq *= 1.98;
+    freq *= lac;
+    total_square_a += Math.pow(a, 2);
     a *= G;
 
     weight = signal * gain;
     // clamp.
     weight = Math.min(1.0, Math.max(weight, 0.0));
   }
-  counters.add_sample(t);
-  return get_ridged_colour(t);
-}
-
-// https://stackoverflow.com/questions/36266895/simple-histogram-algorithm-in-javascript
-function histogram(data, bin_size, min, max) {
-
-  const bins = Math.ceil((max - min + 1) / bin_size);
-  const histogram = new Array(bins).fill(0);
-
-  for (const item of data) {
-    histogram[Math.floor((item - min) / bin_size)]++;
-  }
-
-  return histogram;
+  return t /= Math.sqrt(total_square_a);
 }
 
 self.wasm_instance;
@@ -171,31 +155,50 @@ self.onmessage = async function(e) {
     }
   })();
 
-  const channels = 4;
-  const clamped_array = new Uint8ClampedArray(shared_buffer);
   const baseline = 1.0;
   const gain = 2.0;
 
-  counters = new Counters(); 
+  // Calibrate
+  const counters = new Counters();
+  const num_samples = 10000;
+  const inc = 10;
+  for (let y = 1; y < num_samples / inc; y += inc) {
+    for (let x = 1; x < num_samples / inc; x += inc) {
+      const n  = (function () {
+        switch (fbm_type) {
+        default:
+          return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
+        case 'ridged':
+          return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
+                                  1, baseline, gain, noise);
+        }
+      })();
+      counters.add_sample(n);
+    }
+  }
+  console.assert(counters.samples.length == num_samples);
+  counters.finish();
 
+  const channels = 4;
+  const clamped_array = new Uint8ClampedArray(shared_buffer);
   for (let y = start_y; y < start_y + height; ++y) {
     for (let x = 0; x < width; ++x) {
       let pixel = (y * width * channels) + x * channels;
-      const colour  = (function () {
+      const n = (function () {
         switch (fbm_type) {
         default:
           return fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
         case 'ridged':
           return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
-                                    num_octaves, baseline, gain, noise);
+                                  num_octaves, baseline, gain, noise);
         }
       })();
+      const colour = counters.choose_colour(n);
       clamped_array[pixel] =  colour.r;
       clamped_array[pixel+1] = colour.g;
       clamped_array[pixel+2] = colour.b;
       clamped_array[pixel+3] = 255;
     }
   }
-  counters.finish();
   postMessage('done');
 }
