@@ -8,11 +8,11 @@
 </head>
 <body>
   <div>
-    <input type="range" id="hurst" name="hurst" min="1" max="100" />
+    <input type="range" id="hurst" name="hurst" min="0.1" max="2.5" step="0.1" />
     <label for="hurst">Hurst</label>
   </div>
   <div>
-    <input type="range" id="octaves" name="octaves" min="1" max="24" />
+    <input type="range" id="octaves" name="octaves" min="1" max="12" />
     <label for="octaves">Octaves</label>
   </div>
   <div>
@@ -33,14 +33,14 @@
     ];
 
     let scale = 0.005;
-    let H = 0.5;
+    let H = Math.SQRT1_2;
     let num_octaves = 12;
     let x = 1;
     let y = 1;
 
     const hurst_slider = document.getElementById('hurst');
     hurst_slider.addEventListener("input", (event) => {
-      H = event.target.value / 100;
+      H = event.target.value;
       draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
     });
 

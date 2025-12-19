@@ -10,7 +10,7 @@ class RGB {
   get b() { return this._b; }
 }
 
-class Counters {
+class Colours {
   constructor() {
     this.samples = new Array();
     this.light_green = new RGB(194, 175, 110);
@@ -102,7 +102,6 @@ function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
   let a = 1.0;
   let t = 0.0;
   let weight = 1.0;
-  let total_square_a = 0.0;
   const lac = Math.pow(Math.LOG2E, 2);
 
   for (let i = 0; i < octaves; i++) {
@@ -112,14 +111,13 @@ function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
     signal *= weight;
     t += signal * a;
     freq *= lac;
-    total_square_a += Math.pow(a, 2);
     a *= G;
 
     weight = signal * gain;
     // clamp.
     weight = Math.min(1.0, Math.max(weight, 0.0));
   }
-  return t /= Math.sqrt(total_square_a);
+  return t;
 }
 
 self.wasm_instance;
@@ -159,7 +157,7 @@ self.onmessage = async function(e) {
   const gain = 2.0;
 
   // Calibrate
-  const counters = new Counters();
+  const colours = new Colours();
   const num_samples = 10000;
   const inc = 10;
   for (let y = 1; y < num_samples / inc; y += inc) {
@@ -170,14 +168,14 @@ self.onmessage = async function(e) {
           return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
         case 'ridged':
           return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
-                                  1, baseline, gain, noise);
+                                  num_octaves, baseline, gain, noise);
         }
       })();
-      counters.add_sample(n);
+      colours.add_sample(n);
     }
   }
-  console.assert(counters.samples.length == num_samples);
-  counters.finish();
+  console.assert(colours.samples.length == num_samples);
+  colours.finish();
 
   const channels = 4;
   const clamped_array = new Uint8ClampedArray(shared_buffer);
@@ -193,7 +191,7 @@ self.onmessage = async function(e) {
                                   num_octaves, baseline, gain, noise);
         }
       })();
-      const colour = counters.choose_colour(n);
+      const colour = colours.choose(n);
       clamped_array[pixel] =  colour.r;
       clamped_array[pixel+1] = colour.g;
       clamped_array[pixel+2] = colour.b;
