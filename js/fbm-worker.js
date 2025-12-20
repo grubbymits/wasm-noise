@@ -37,7 +37,7 @@ class Colours {
     return this.samples[index];
   };
 
-  choose_colour(n) {
+  choose(n) {
     const water = 0.15;
     const sand = 0.20;
     const trees = 0.60;
@@ -130,7 +130,7 @@ self.onmessage = async function(e) {
     scale,
     G,
     num_octaves,
-    fbm_type,
+    noise_type,
     fade,
     offset_x,
     offset_y,
@@ -163,8 +163,11 @@ self.onmessage = async function(e) {
   for (let y = 1; y < num_samples / inc; y += inc) {
     for (let x = 1; x < num_samples / inc; x += inc) {
       const n  = (function () {
-        switch (fbm_type) {
+        switch (noise_type) {
         default:
+          console.log(noise_type);
+          throw new Error('Unsupported fbm type!');
+        case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
         case 'ridged':
           return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
@@ -183,8 +186,11 @@ self.onmessage = async function(e) {
     for (let x = 0; x < width; ++x) {
       let pixel = (y * width * channels) + x * channels;
       const n = (function () {
-        switch (fbm_type) {
+        switch (noise_type) {
         default:
+          console.log(noise_type);
+          throw new Error('Unsupported fbm type!');
+        case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
         case 'ridged':
           return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,

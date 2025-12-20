@@ -1,14 +1,13 @@
-export async function draw_fbm(workers, canvas, scale, num_octaves, H, x, y) {
+export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
+                               noise_type, x, y) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
   console.log('scale:', scale);
   console.log('octaves:', num_octaves);
   console.log('hurst exponent:', H);
-  const fade = 'quintic';
-  const fbm_type = 'ridged';
   console.log('fade:', fade);
-  console.log('fbm:', fbm_type);
+  console.log('noise:', noise_type);
   const G = Math.pow(2, -H);
 
   const channels = 4;
@@ -35,7 +34,7 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, x, y) {
         scale,
         G,
         num_octaves,
-        fbm_type,
+        noise_type,
         fade,
         offset_x,
         offset_y,

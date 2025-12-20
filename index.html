@@ -20,6 +20,21 @@
     <label for="scale">Scale</label>
   </div>
   <div>
+  <label for="fade-select">Choose a fade:</label>
+  <select name="fade" id="fade-select">
+    <option value="none">None</option>
+    <option value="hermite">Hermite</option>
+    <option value="quintic">Quintic</option>
+  </select>
+  </div>
+  <div>
+  <label for="noise-select">Choose a noise:</label>
+  <select name="noise" id="noise-select">
+    <option value="fbm">fBM</option>
+    <option value="ridged">Ridged</option>
+  </select>
+  </div>
+  <div>
     <canvas id="canvas" width="900" height="600">
   </div>
   <script type="module">
@@ -35,25 +50,43 @@
     let scale = 0.005;
     let H = Math.SQRT1_2;
     let num_octaves = 12;
+    let fade = 'none';
+    let noise_type = 'fbm';
     let x = 1;
     let y = 1;
+
+    const redraw = function() {
+      draw_fbm(workers, canvas, scale, num_octaves, H, fade, noise_type, x, y);
+    }
+
+    const fade_select = document.getElementById('fade-select');
+    fade_select.addEventListener("change", () => {
+      fade = fade_select.value;
+      redraw();
+    });
+
+    const noise_select = document.getElementById('noise-select');
+    noise_select.addEventListener("change", () => {
+      noise_type = noise_select.value;
+      redraw();
+    });
 
     const hurst_slider = document.getElementById('hurst');
     hurst_slider.addEventListener("input", (event) => {
       H = event.target.value;
-      draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
+      redraw();
     });
 
     const octaves_slider = document.getElementById('octaves');
     octaves_slider.addEventListener("input", (event) => {
       num_octaves = event.target.value;
-      draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
+      redraw();
     });
 
     const scale_slider = document.getElementById('scale');
     scale_slider.addEventListener("input", (event) => {
       scale = event.target.value / 1000;
-      draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
+      redraw();
     });
 
     const canvas = document.getElementById('canvas');
@@ -63,10 +96,9 @@
         const dy = e.offsetY * scale - y;
         x += dx;
         y += dy;
-        draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
+        redraw();
       }
     });
-
-    draw_fbm(workers, canvas, scale, num_octaves, H, x, y);
+    redraw();
   </script>
 </body>
