@@ -97,8 +97,20 @@ function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t /= Math.sqrt(total_square_a);
 }
 
-function ridged_multi_fbm(x, y, offset_x, offset_y, freq, G, octaves,
-                          baseline, gain, noise2d) {
+function turbulence(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+  let a = 1.0;
+  let t = 0.0;
+  const lac = Math.pow(Math.LOG2E, 2);
+  for (let i = 0; i < octaves; i++) {
+    t += a * Math.abs(noise2d(freq * x + offset_x, freq * y + offset_y));
+    freq *= lac;
+    a *= G;
+  }
+  return t;
+}
+
+function ridged(x, y, offset_x, offset_y, freq, G, octaves, baseline, gain,
+                noise2d) {
   let a = 1.0;
   let t = 0.0;
   let weight = 1.0;
@@ -169,9 +181,12 @@ self.onmessage = async function(e) {
           throw new Error('Unsupported fbm type!');
         case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
+        case 'turbulence':
+          return turbulence(x, y, offset_x, offset_y, scale, G, num_octaves,
+                            noise);
         case 'ridged':
-          return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
-                                  num_octaves, baseline, gain, noise);
+          return ridged(x, y, offset_x, offset_y, scale, G, num_octaves,
+                        baseline, gain, noise);
         }
       })();
       colours.add_sample(n);
@@ -192,9 +207,12 @@ self.onmessage = async function(e) {
           throw new Error('Unsupported fbm type!');
         case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
+        case 'turbulence':
+          return turbulence(x, y, offset_x, offset_y, scale, G, num_octaves,
+                            noise);
         case 'ridged':
-          return ridged_multi_fbm(x, y, offset_x, offset_y, scale, G,
-                                  num_octaves, baseline, gain, noise);
+          return ridged(x, y, offset_x, offset_y, scale, G,
+                        num_octaves, baseline, gain, noise);
         }
       })();
       const colour = colours.choose(n);
