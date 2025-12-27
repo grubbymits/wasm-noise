@@ -1,3 +1,9 @@
+function check_num(n) {
+  return !isNaN(n) &&
+         Number.NEGATIVE_INFINITY != n &&
+         Number.POSITIVE_INFINITY != n;
+}
+
 class RGB {
   constructor(r, g, b) {
     this._r = r;
@@ -84,16 +90,32 @@ class Colours {
 }
 
 function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+  console.assert(freq);
+  console.assert(octaves);
+  console.assert(x + offset_x >= 1);
+  console.assert(y + offset_y >= 1);
+
   let a = 1.0;
   let t = 0.0;
   let total_square_a = 0.0;
   const lac = Math.pow(Math.LOG2E, 2);
   for (let i = 0; i < octaves; i++) {
-    t += a * noise2d(freq * x + offset_x, freq * y + offset_y);
+    const px = freq * x + offset_x;
+    const py = freq * y + offset_y;
+    const n = noise2d(px, py);
+    if (!check_num(n)) {
+      console.log('n:', n);
+      console.log('octave:', i);
+      console.log('px:', px);
+      console.log('py:', py);
+      throw new Error('noise NaN!');
+    }
+    t += a * n;
     freq *= lac;
     total_square_a += Math.pow(a, 2);
     a *= G;
   }
+  console.assert(total_square_a);
   return t /= Math.sqrt(total_square_a);
 }
 
@@ -107,6 +129,32 @@ function turbulence(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
     a *= G;
   }
   return t;
+}
+
+class Vec2D {
+  constructor(x, y) {
+    this._x = x;
+    this._y = y;
+  }
+  get x() { return this._x; }
+  get y() { return this._y; }
+}
+
+function vec_noise(x, y, noise2d) {
+  const nx = noise2d(x, y);
+  const ny = noise2d(x + 3.33, y + 3.33);
+  return new Vec2D(nx, ny);
+}
+
+function dist_noise(x, y, offset_x, offset_y, freq, G, octaves, distortion,
+                    noise2d) {
+  console.assert(distortion);
+  const mod_x = freq * x + offset_x + 1.5;
+  const mod_y = freq * y + offset_y + 1.5;
+  const vn = vec_noise(mod_x, mod_y, noise2d);
+  const px = x + distortion * vn.x;
+  const py = y + distortion * vn.y;
+  return fbm(px, py, offset_x, offset_y, freq, G, octaves, noise2d);
 }
 
 function ridged(x, y, offset_x, offset_y, freq, G, octaves, baseline, gain,
@@ -167,6 +215,7 @@ self.onmessage = async function(e) {
 
   const baseline = 1.0;
   const gain = 2.0;
+  const distortion = 3.0;
 
   // Calibrate
   const colours = new Colours();
@@ -179,6 +228,8 @@ self.onmessage = async function(e) {
         default:
           console.log(noise_type);
           throw new Error('Unsupported fbm type!');
+        case 'distort':
+          return dist_noise(x, y, offset_x, offset_y, scale, G, 1, distortion, noise);
         case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
         case 'turbulence':
@@ -205,6 +256,9 @@ self.onmessage = async function(e) {
         default:
           console.log(noise_type);
           throw new Error('Unsupported fbm type!');
+        case 'distort':
+          return dist_noise(x, y, offset_x, offset_y, scale, G, num_octaves,
+                            distortion, noise);
         case 'fbm':
           return fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
         case 'turbulence':

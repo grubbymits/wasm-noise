@@ -30,6 +30,7 @@
   <div>
   <label for="noise-select">Choose a noise:</label>
   <select name="noise" id="noise-select">
+    <option value="distort">Distort</option>
     <option value="fbm">fBM</option>
     <option value="ridged">Ridged</option>
     <option value="turbulence">Turbulence</option>
@@ -52,9 +53,9 @@
     let H = Math.SQRT1_2;
     let num_octaves = 12;
     let fade = 'none';
-    let noise_type = 'fbm';
-    let x = 1;
-    let y = 1;
+    let noise_type = 'distort';
+    let x = 15;
+    let y = 15;
 
     const redraw = function() {
       draw_fbm(workers, canvas, scale, num_octaves, H, fade, noise_type, x, y);
