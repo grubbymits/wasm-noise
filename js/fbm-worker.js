@@ -89,7 +89,7 @@ class Colours {
   }
 }
 
-function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+function fbm(x, y, offset_x, offset_y, freq, G, octaves) {
   console.assert(freq);
   console.assert(octaves);
   console.assert(x + offset_x >= 1);
@@ -119,7 +119,7 @@ function fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t /= Math.sqrt(total_square_a);
 }
 
-function turbulence(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+function turbulence(x, y, offset_x, offset_y, freq, G, octaves) {
   let a = 1.0;
   let t = 0.0;
   const lac = Math.pow(Math.LOG2E, 2);
@@ -131,7 +131,7 @@ function turbulence(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t;
 }
 
-function ridged_multi(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+function ridged_multi(x, y, offset_x, offset_y, freq, G, octaves) {
   const baseline = 1.0;
   const gain = 2.0;
   let a = 1.0;
@@ -155,16 +155,17 @@ function ridged_multi(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t;
 }
 
-function domain_warp(x, y, offset_x, offset_y, freq, G, octaves, noise2d, gen_func) {
+function domain_warp(x, y, offset_x, offset_y, freq, G, octaves, gen_func) {
   // https://iquilezles.org/articles/warp/
-  const nx = fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d);
-  const ny = fbm(x + 5.2, y + 1.3, offset_x, offset_y, freq, G, octaves,
-                 noise2d);
+  const nx = fbm(x, y, offset_x, offset_y, freq, G, octaves);
+  const ny = fbm(x + 5.2, y + 1.3, offset_x, offset_y, freq, G, octaves);
   return gen_func(x + nx * 4.0, y + ny * 4.0, offset_x, offset_y, freq, G,
-                  octaves, noise2d);
+                  octaves);
 }
 
 self.wasm_instance;
+self.noise2d;
+
 self.onmessage = async function(e) {
   const {
     shared_buffer,
@@ -187,7 +188,7 @@ self.onmessage = async function(e) {
     self.wasm_instance = obj.instance;
   }
 
-  const noise = (function () {
+  noise2d = (function () {
     switch (fade) {
     default:
       return self.wasm_instance.exports.noise2d;
@@ -220,9 +221,9 @@ self.onmessage = async function(e) {
     for (let x = 1; x < num_samples / inc; x += inc) {
       const n = warp ?
         domain_warp(x, y, offset_x, offset_y, scale, G,
-                    num_octaves, noise, noise_generator)
+                    num_octaves, noise_generator)
         : noise_generator(x, y, offset_x, offset_y, scale, G,
-                          num_octaves, noise);
+                          num_octaves);
       colours.add_sample(n);
     }
   }
@@ -236,9 +237,9 @@ self.onmessage = async function(e) {
       let pixel = (y * width * channels) + x * channels;
       const n = warp ?
         domain_warp(x, y, offset_x, offset_y, scale, G,
-                    num_octaves, noise, noise_generator)
+                    num_octaves, noise_generator)
         : noise_generator(x, y, offset_x, offset_y, scale, G,
-                          num_octaves, noise);
+                          num_octaves);
       const colour = colours.choose(n);
       clamped_array[pixel] =  colour.r;
       clamped_array[pixel+1] = colour.g;
