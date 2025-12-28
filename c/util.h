@@ -46,7 +46,7 @@ inline struct Vec2D normalise(struct Vec2D v) {
   return res;
 }
 
-inline uint32_t hash(uint32_t h) {
+inline int32_t hash(int32_t h) {
   h = (h ^ (h >> 16)) * 0x21f0aaadU;
   h = (h ^ (h >> 15)) * 0x735a2d97U;
   return h ^ (h >> 15);

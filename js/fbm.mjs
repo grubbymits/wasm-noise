@@ -1,5 +1,5 @@
 export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
-                               noise_type, x, y) {
+                               noise_type, warp, x, y) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -36,6 +36,7 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
         num_octaves,
         noise_type,
         fade,
+        warp,
         offset_x,
         offset_y,
       });

@@ -30,11 +30,15 @@
   <div>
   <label for="noise-select">Choose a noise:</label>
   <select name="noise" id="noise-select">
-    <option value="distort">Distort</option>
     <option value="fbm">fBM</option>
-    <option value="ridged">Ridged</option>
+    <option value="ridged-multi">Ridged Multi</option>
     <option value="turbulence">Turbulence</option>
+    <option value="warp">Warp</option>
   </select>
+  </div>
+  <div>
+    <input type="checkbox" id="warp" name="warp"/>
+    <label for="warp">Domain Warp</label>
   </div>
   <div>
     <canvas id="canvas" width="900" height="600">
@@ -53,12 +57,13 @@
     let H = Math.SQRT1_2;
     let num_octaves = 12;
     let fade = 'none';
-    let noise_type = 'distort';
+    let noise_type = 'fbm';
     let x = 15;
     let y = 15;
 
     const redraw = function() {
-      draw_fbm(workers, canvas, scale, num_octaves, H, fade, noise_type, x, y);
+      let warp = document.getElementById("warp").checked;
+      draw_fbm(workers, canvas, scale, num_octaves, H, fade, noise_type, warp, x, y);
     }
 
     const fade_select = document.getElementById('fade-select');
@@ -88,6 +93,10 @@
     const scale_slider = document.getElementById('scale');
     scale_slider.addEventListener("input", (event) => {
       scale = event.target.value / 1000;
+      redraw();
+    });
+
+    document.getElementById("warp").addEventListener("change", () => {
       redraw();
     });
 

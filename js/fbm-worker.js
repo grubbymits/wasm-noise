@@ -131,34 +131,9 @@ function turbulence(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
   return t;
 }
 
-class Vec2D {
-  constructor(x, y) {
-    this._x = x;
-    this._y = y;
-  }
-  get x() { return this._x; }
-  get y() { return this._y; }
-}
-
-function vec_noise(x, y, noise2d) {
-  const nx = noise2d(x, y);
-  const ny = noise2d(x + 3.33, y + 3.33);
-  return new Vec2D(nx, ny);
-}
-
-function dist_noise(x, y, offset_x, offset_y, freq, G, octaves, distortion,
-                    noise2d) {
-  console.assert(distortion);
-  const mod_x = freq * x + offset_x + 1.5;
-  const mod_y = freq * y + offset_y + 1.5;
-  const vn = vec_noise(mod_x, mod_y, noise2d);
-  const px = x + distortion * vn.x;
-  const py = y + distortion * vn.y;
-  return fbm(px, py, offset_x, offset_y, freq, G, octaves, noise2d);
-}
-
-function ridged(x, y, offset_x, offset_y, freq, G, octaves, baseline, gain,
-                noise2d) {
+function ridged_multi(x, y, offset_x, offset_y, freq, G, octaves, noise2d) {
+  const baseline = 1.0;
+  const gain = 2.0;
   let a = 1.0;
   let t = 0.0;
   let weight = 1.0;
@@ -180,6 +155,15 @@ function ridged(x, y, offset_x, offset_y, freq, G, octaves, baseline, gain,
   return t;
 }
 
+function domain_warp(x, y, offset_x, offset_y, freq, G, octaves, noise2d, gen_func) {
+  // https://iquilezles.org/articles/warp/
+  const nx = fbm(x, y, offset_x, offset_y, freq, G, octaves, noise2d);
+  const ny = fbm(x + 5.2, y + 1.3, offset_x, offset_y, freq, G, octaves,
+                 noise2d);
+  return gen_func(x + nx * 4.0, y + ny * 4.0, offset_x, offset_y, freq, G,
+                  octaves, noise2d);
+}
+
 self.wasm_instance;
 self.onmessage = async function(e) {
   const {
@@ -192,6 +176,7 @@ self.onmessage = async function(e) {
     num_octaves,
     noise_type,
     fade,
+    warp,
     offset_x,
     offset_y,
   } = e.data;
@@ -213,9 +198,19 @@ self.onmessage = async function(e) {
     }
   })();
 
-  const baseline = 1.0;
-  const gain = 2.0;
-  const distortion = 3.0;
+  const noise_generator = (function() {
+    switch (noise_type) {
+    default:
+      console.log(noise_type);
+      throw new Error('Unsupported fbm type!');
+    case 'fbm':
+      return fbm;
+    case 'turbulence':
+      return turbulence;
+    case 'ridged-multi':
+      return ridged_multi;
+    }
+  })();
 
   // Calibrate
   const colours = new Colours();
@@ -223,23 +218,11 @@ self.onmessage = async function(e) {
   const inc = 10;
   for (let y = 1; y < num_samples / inc; y += inc) {
     for (let x = 1; x < num_samples / inc; x += inc) {
-      const n  = (function () {
-        switch (noise_type) {
-        default:
-          console.log(noise_type);
-          throw new Error('Unsupported fbm type!');
-        case 'distort':
-          return dist_noise(x, y, offset_x, offset_y, scale, G, 1, distortion, noise);
-        case 'fbm':
-          return fbm(x, y, offset_x, offset_y, scale, G, 1, noise);
-        case 'turbulence':
-          return turbulence(x, y, offset_x, offset_y, scale, G, num_octaves,
-                            noise);
-        case 'ridged':
-          return ridged(x, y, offset_x, offset_y, scale, G, num_octaves,
-                        baseline, gain, noise);
-        }
-      })();
+      const n = warp ?
+        domain_warp(x, y, offset_x, offset_y, scale, G,
+                    num_octaves, noise, noise_generator)
+        : noise_generator(x, y, offset_x, offset_y, scale, G,
+                          num_octaves, noise);
       colours.add_sample(n);
     }
   }
@@ -251,24 +234,11 @@ self.onmessage = async function(e) {
   for (let y = start_y; y < start_y + height; ++y) {
     for (let x = 0; x < width; ++x) {
       let pixel = (y * width * channels) + x * channels;
-      const n = (function () {
-        switch (noise_type) {
-        default:
-          console.log(noise_type);
-          throw new Error('Unsupported fbm type!');
-        case 'distort':
-          return dist_noise(x, y, offset_x, offset_y, scale, G, num_octaves,
-                            distortion, noise);
-        case 'fbm':
-          return fbm(x, y, offset_x, offset_y, scale, G, num_octaves, noise);
-        case 'turbulence':
-          return turbulence(x, y, offset_x, offset_y, scale, G, num_octaves,
-                            noise);
-        case 'ridged':
-          return ridged(x, y, offset_x, offset_y, scale, G,
-                        num_octaves, baseline, gain, noise);
-        }
-      })();
+      const n = warp ?
+        domain_warp(x, y, offset_x, offset_y, scale, G,
+                    num_octaves, noise, noise_generator)
+        : noise_generator(x, y, offset_x, offset_y, scale, G,
+                          num_octaves, noise);
       const colour = colours.choose(n);
       clamped_array[pixel] =  colour.r;
       clamped_array[pixel+1] = colour.g;
