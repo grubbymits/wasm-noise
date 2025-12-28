@@ -3,13 +3,13 @@
 // https://blog.pkh.me/p/42-sharing-everything-i-could-understand-about-gradient-noise.html
 // https://iquilezles.org/articles/fbm/
 
-static uint32_t hash_2d(uint32_t x, uint32_t y) {
+static int32_t hash_2d(int32_t x, int32_t y) {
   return hash(x ^ hash(y));
 }
 
-static struct Vec2D grad(uint32_t x, uint32_t y) {
-  uint32_t h1 = hash_2d(x, y);
-  uint32_t h2 = hash(h1);
+static struct Vec2D grad(int32_t x, int32_t y) {
+  int32_t h1 = hash_2d(x, y);
+  int32_t h2 = hash(h1);
   struct Vec2D v = { h1, h2 };
   struct Vec2D norm = normalise(v);
   return normalise(sub_2d_scalar(mul_2d_scalar(norm, 2.0f), 1.0f));;
@@ -33,8 +33,8 @@ static float fade_hermite(float t) { return (3.0-2.0*t)*t*t; }
 static float fade_quintic(float t) { return ((6.0*t-15.0)*t+10.0)*t*t*t; }
 
 static inline double noise_fade(double fx, double fy, FadeFunc fade) {
-  uint32_t ix = fx;
-  uint32_t iy = fy;
+  int32_t ix = fx;
+  int32_t iy = fy;
   struct Vec2D ga = grad(ix, iy);
   struct Vec2D gb = grad(ix + 1, iy);
   struct Vec2D gc = grad(ix, iy + 1);
