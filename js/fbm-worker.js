@@ -119,6 +119,18 @@ function fbm(x, y, offset_x, offset_y, freq, G, octaves) {
   return t /= Math.sqrt(total_square_a);
 }
 
+function ridged(x, y, offset_x, offset_y, freq, G, octaves) {
+  let a = 1.0;
+  let t = 0.0;
+  const lac = Math.pow(Math.LOG2E, 2);
+  for (let i = 0; i < octaves; i++) {
+    t += 1 - a * Math.abs(noise2d(freq * x + offset_x, freq * y + offset_y));
+    freq *= lac;
+    a *= G;
+  }
+  return t;
+}
+
 function turbulence(x, y, offset_x, offset_y, freq, G, octaves) {
   let a = 1.0;
   let t = 0.0;
@@ -208,6 +220,8 @@ self.onmessage = async function(e) {
       return fbm;
     case 'turbulence':
       return turbulence;
+    case 'ridged':
+      return ridged;
     case 'ridged-multi':
       return ridged_multi;
     }
