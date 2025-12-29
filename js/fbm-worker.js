@@ -119,6 +119,29 @@ function fbm(x, y, offset_x, offset_y, freq, G, octaves) {
   return t /= Math.sqrt(total_square_a);
 }
 
+function fbm_multi(x, y, offset_x, offset_y, freq, G, octaves) {
+
+  let a = 1.0;
+  let t = 0.0;
+  let total_square_a = 0.0;
+  const lac = Math.pow(Math.LOG2E, 2);
+  for (let i = 0; i < octaves; i++) {
+    const px = freq * x + offset_x;
+    const py = freq * y + offset_y;
+    let n = noise2d(px, py);
+    if (i > 1) {
+      const factor = Math.min(1.0, Math.max(n, 0.0));
+      n *= factor;
+    }
+    t += a * n;
+    freq *= lac;
+    total_square_a += Math.pow(a, 2);
+    a *= G;
+  }
+  console.assert(total_square_a);
+  return t /= Math.sqrt(total_square_a);
+}
+
 function ridged(x, y, offset_x, offset_y, freq, G, octaves) {
   let a = 1.0;
   let t = 0.0;
@@ -218,6 +241,8 @@ self.onmessage = async function(e) {
       throw new Error('Unsupported fbm type!');
     case 'fbm':
       return fbm;
+    case 'fbm-multi':
+      return fbm_multi;
     case 'turbulence':
       return turbulence;
     case 'ridged':
