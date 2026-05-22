@@ -5,7 +5,7 @@ set -x
 wasm32-clang \
   --target=wasm32-unknown-unknown \
   -O3 -ffast-math \
-  -msimd128 -mrelaxed-simd \
+  -msimd128 \
   -nostdlib \
   -Wl,--no-entry \
   ./c/2d.c \
