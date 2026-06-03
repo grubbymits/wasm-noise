@@ -28,9 +28,9 @@ typedef float (*FadeFunc)(float);
 
 static float no_fade(float t) { return t; }
 
-static float fade_hermite(float t) { return (3.0-2.0*t)*t*t; }
+static float fade_hermite(float t) { return (3.0f-2.0f*t)*t*t; }
 
-static float fade_quintic(float t) { return ((6.0*t-15.0)*t+10.0)*t*t*t; }
+static float fade_quintic(float t) { return ((6.0f*t-15.0f)*t+10.0f)*t*t*t; }
 
 static inline double noise_fade(double fx, double fy, FadeFunc fade) {
   int32_t ix = fx;

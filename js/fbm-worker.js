@@ -200,6 +200,10 @@ function domain_warp(x, y, offset_x, offset_y, freq, G, octaves, gen_func) {
 
 self.wasm_instance;
 self.noise2d;
+self.memory = new WebAssembly.Memory({
+  initial: 2,
+  maximum: 2,
+});
 
 self.onmessage = async function(e) {
   const {
@@ -219,7 +223,8 @@ self.onmessage = async function(e) {
 
   if (!self.wasm_instance) {
     console.log('instaniate module for first run');
-    const obj = await WebAssembly.instantiateStreaming(fetch("../wasm/noise.wasm"), {});
+    const obj = await WebAssembly.instantiateStreaming(fetch("../wasm/noise.wasm"), {
+        env: { memory: self.memory }});
     self.wasm_instance = obj.instance;
   }
 

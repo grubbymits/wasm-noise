@@ -7,7 +7,24 @@ wasm32-clang \
   -O3 -ffast-math \
   -msimd128 \
   -nostdlib \
-  -Wl,--no-entry \
   ./c/2d.c \
   -I ./c/ \
+  -c \
+  -o wasm/2d.o
+
+emcc \
+  --target=wasm32-unknown-emscripten \
+  -O3 -ffast-math -std=c++2c \
+  -msimd128 \
+  ./cpp/tileable.cc \
+  -c \
+  -o wasm/tileable.o
+
+emcc \
+  -s STANDALONE_WASM \
+  -s IMPORTED_MEMORY=1 \
+  -s INITIAL_MEMORY=128KB \
+  -Wl,--no-entry \
+  wasm/2d.o \
+  wasm/tileable.o \
   -o wasm/noise.wasm
