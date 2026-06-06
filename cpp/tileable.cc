@@ -188,6 +188,11 @@ double noise_fade(double fx, double fy, FadeFunc fade) {
 
 } // end namespace
 
+__attribute__((export_name("noise8x8")))
+double noise8x8_none(double fx, double fy) {
+  return noise_fade<8>(fx, fy, &no_fade);
+}
+
 __attribute__((export_name("noise16x16")))
 double noise16x16_none(double fx, double fy) {
   return noise_fade<16>(fx, fy, &no_fade);
@@ -203,6 +208,11 @@ double noise64x64_none(double fx, double fy) {
   return noise_fade<64>(fx, fy, &no_fade);
 }
 
+__attribute__((export_name("noise8x8_hermite")))
+double noise8x8_hermite(double fx, double fy) {
+  return noise_fade<8>(fx, fy, &fade_hermite);
+}
+
 __attribute__((export_name("noise16x16_hermite")))
 double noise16x16_hermite(double fx, double fy) {
   return noise_fade<16>(fx, fy, &fade_hermite);
@@ -216,6 +226,11 @@ double noise32x32_hermite(double fx, double fy) {
 __attribute__((export_name("noise64x64_hermite")))
 double noise64x64_hermite(double fx, double fy) {
   return noise_fade<64>(fx, fy, &fade_hermite);
+}
+
+__attribute__((export_name("noise8x8_quintic")))
+double noise8x8_quintic(double fx, double fy) {
+  return noise_fade<8>(fx, fy, &fade_quintic);
 }
 
 __attribute__((export_name("noise16x16_quintic")))
