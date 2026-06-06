@@ -217,6 +217,7 @@ self.onmessage = async function(e) {
     noise_type,
     fade,
     warp,
+    tile,
     offset_x,
     offset_y,
   } = e.data;
@@ -228,14 +229,17 @@ self.onmessage = async function(e) {
     self.wasm_instance = obj.instance;
   }
 
-  noise2d = (function () {
+  self.noise2d = (function () {
     switch (fade) {
     default:
-      return self.wasm_instance.exports.noise2d;
+      return tile ? self.wasm_instance.exports.noise16x16
+                  : self.wasm_instance.exports.noise2d;
     case 'hermite':
-      return self.wasm_instance.exports.noise2d_hermite;
+      return tile ? self.wasm_instance.exports.noise16x16_hermite
+                  : self.wasm_instance.exports.noise2d_hermite;
     case 'quintic':
-      return self.wasm_instance.exports.noise2d_quintic;
+      return tile ? self.wasm_instance.exports.noise16x16_quintic
+                  : self.wasm_instance.exports.noise2d_quintic;
     }
   })();
 

@@ -1,5 +1,5 @@
 export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
-                               noise_type, warp, x, y) {
+                               noise_type, warp, tile, x, y) {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -8,6 +8,7 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
   console.log('hurst exponent:', H);
   console.log('fade:', fade);
   console.log('noise:', noise_type);
+  console.log('tile:', tile);
   const G = Math.pow(2, -H);
 
   const channels = 4;
@@ -37,6 +38,7 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
         noise_type,
         fade,
         warp,
+        tile,
         offset_x,
         offset_y,
       });
