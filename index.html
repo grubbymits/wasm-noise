@@ -58,7 +58,7 @@
       new Worker(new URL("js/fbm-worker.js", import.meta.url)),
     ];
 
-    let scale = 0.005;
+    let scale = 1 / 320;
     let H = Math.SQRT1_2;
     let num_octaves = 12;
     let fade = 'none';
@@ -99,7 +99,7 @@
 
     const scale_slider = document.getElementById('scale');
     scale_slider.addEventListener("input", (event) => {
-      scale = event.target.value / 1000;
+      scale = event.target.value / 320;
       redraw();
     });
 

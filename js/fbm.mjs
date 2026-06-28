@@ -3,13 +3,14 @@ export async function draw_fbm(workers, canvas, scale, num_octaves, H, fade,
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
+  const G = Math.pow(2, -H);
   console.log('scale:', scale);
   console.log('octaves:', num_octaves);
   console.log('hurst exponent:', H);
+  console.log('persistenc:', G);
   console.log('fade:', fade);
   console.log('noise:', noise_type);
   console.log('tile:', tile);
-  const G = Math.pow(2, -H);
 
   const channels = 4;
   const num_bytes = width * height * channels;

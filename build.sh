@@ -14,7 +14,7 @@ wasm32-clang \
 
 emcc \
   --target=wasm32-unknown-emscripten \
-  -O3 -ffast-math -std=c++2c \
+  -O1 -g -ffast-math -std=c++2c \
   -msimd128 \
   ./cpp/tileable.cc \
   -c \

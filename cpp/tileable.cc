@@ -18,11 +18,6 @@ struct U {
     }
   }
   float operator[](int i) const {
-#ifdef DEBUG
-    if (data[i] != data[i]) {
-      std::cout << "U data at " << i << " = " << data[i] << std::endl;
-    }
-#endif // DEBUG
     return data[i];
   }
 };
@@ -37,11 +32,6 @@ struct V {
     }
   }
   float operator[](int i) const {
-#ifdef DEBUG
-    if (data[i] != data[i]) {
-      std::cout << "V data at " << i << " = " << data[i] << std::endl;
-    }
-#endif // DEBUG
     return data[i];
   }
 };
@@ -60,39 +50,21 @@ class Vec2D {
   }
 
   Vec2D add(Vec2D other) const {
-#ifdef DEBUG
-    std::cout << "add" << std::endl;
-#endif // DEBUG
     return Vec2D(u() + other.u(), v() + other.v());
   }
   Vec2D sub(Vec2D other) const {
-#ifdef DEBUG
-    std::cout << "sub" << std::endl;
-#endif // DEBUG
     return Vec2D(u() - other.u(), v() - other.v());
   }
   Vec2D sub(float f) const {
-#ifdef DEBUG
-    std::cout << "sub" << std::endl;
-#endif // DEBUG
     return Vec2D(u() - f, v() - f);
   }
   Vec2D mul(float f) const {
-#ifdef DEBUG
-    std::cout << "mul" << std::endl;
-#endif // DEBUG
     return Vec2D(u() * f, v() * f);
   }
   float mag() const {
-#ifdef DEBUG
-    std::cout << "mag" << std::endl;
-#endif // DEBUG
     return std::sqrt(dot(*this));
   }
   Vec2D normalise() const {
-#ifdef DEBUG
-    std::cout << "normalise" << std::endl;
-#endif // DEBUG
     return mul(1.0f / mag());
   }
 
@@ -114,21 +86,20 @@ inline int32_t hash(int32_t h) {
   return h ^ (h >> 15);
 }
 
-template<unsigned N>
-int32_t hash_2d(int32_t x, int32_t y) {
-  x %= N;
-  y %= N;
+inline int32_t hash_2d(int32_t x, int32_t y, uint32_t period) {
+  x %= period;
+  y %= period;
   return hash(x ^ hash(y));
 }
 
 template<unsigned N>
-Vec2D grad(int32_t x, int32_t y) {
+Vec2D grad(int32_t x, int32_t y, uint32_t period) {
   static auto u = U<N>();
   static auto v = V<N>();
 
-  uint32_t h1 = hash_2d<N>(x, y);
+  uint32_t h1 = hash_2d(x, y, period);
   uint32_t h2 = hash(h1);
-  Vec2D dirs(u[h1 % N], v[h2 % N]);
+  Vec2D dirs(u[h1 % period], v[h2 % period]);
   return dirs.normalise().mul(2.0f).sub(1.0f).normalise();
 }
 
@@ -150,13 +121,13 @@ float fade_hermite(float t) { return (3.0f-2.0f*t)*t*t; }
 float fade_quintic(float t) { return ((6.0f*t-15.0f)*t+10.0f)*t*t*t; }
 
 template<unsigned N>
-double noise_fade(double fx, double fy, FadeFunc fade) {
+double noise_fade(double fx, double fy, FadeFunc fade, uint32_t period) {
   int32_t ix = fx;
   int32_t iy = fy;
-  Vec2D ga = grad<N>(ix, iy);
-  Vec2D gb = grad<N>(ix + 1, iy);
-  Vec2D gc = grad<N>(ix, iy + 1);
-  Vec2D gd = grad<N>(ix + 1, iy + 1);
+  Vec2D ga = grad<N>(ix, iy, period);
+  Vec2D gb = grad<N>(ix + 1, iy, period);
+  Vec2D gc = grad<N>(ix, iy + 1, period);
+  Vec2D gd = grad<N>(ix + 1, iy + 1, period);
 
   Vec2D a0 = { 1.0f, 0.0f };
   Vec2D a1 = { 0.0f, 1.0f };
@@ -188,62 +159,76 @@ double noise_fade(double fx, double fy, FadeFunc fade) {
 
 } // end namespace
 
+__attribute__((export_name("noise256x256")))
+double noise256x256_none(double fx, double fy, uint32_t period) {
+  return noise_fade<256>(fx, fy, &no_fade, period);
+}
+__attribute__((export_name("noise256x256_hermite")))
+double noise256x256_none(double fx, double fy, uint32_t period) {
+  return noise_fade<256>(fx, fy, &fade_hermite, period);
+}
+__attribute__((export_name("noise256x256_quintic")))
+double noise256x256_none(double fx, double fy, uint32_t period) {
+  return noise_fade<256>(fx, fy, &fade_quintic, period);
+}
+/*
 __attribute__((export_name("noise8x8")))
-double noise8x8_none(double fx, double fy) {
-  return noise_fade<8>(fx, fy, &no_fade);
+double noise8x8_none(double fx, double fy, uint32_t period) {
+  return noise_fade<8>(fx, fy, &no_fade, period);
 }
 
 __attribute__((export_name("noise16x16")))
-double noise16x16_none(double fx, double fy) {
-  return noise_fade<16>(fx, fy, &no_fade);
+double noise16x16_none(double fx, double fy, uint32_t period) {
+  return noise_fade<16>(fx, fy, &no_fade, period);
 }
 
 __attribute__((export_name("noise32x32")))
-double noise32x32_none(double fx, double fy) {
-  return noise_fade<32>(fx, fy, &no_fade);
+double noise32x32_none(double fx, double fy, uint32_t period) {
+  return noise_fade<32>(fx, fy, &no_fade, period);
 }
 
 __attribute__((export_name("noise64x64")))
-double noise64x64_none(double fx, double fy) {
-  return noise_fade<64>(fx, fy, &no_fade);
+double noise64x64_none(double fx, double fy, uint32_t period) {
+  return noise_fade<64>(fx, fy, &no_fade, period);
 }
 
 __attribute__((export_name("noise8x8_hermite")))
-double noise8x8_hermite(double fx, double fy) {
-  return noise_fade<8>(fx, fy, &fade_hermite);
+double noise8x8_hermite(double fx, double fy, uint32_t period) {
+  return noise_fade<8>(fx, fy, &fade_hermite, period);
 }
 
 __attribute__((export_name("noise16x16_hermite")))
-double noise16x16_hermite(double fx, double fy) {
-  return noise_fade<16>(fx, fy, &fade_hermite);
+double noise16x16_hermite(double fx, double fy, uint32_t period) {
+  return noise_fade<16>(fx, fy, &fade_hermite, period);
 }
 
 __attribute__((export_name("noise32x32_hermite")))
-double noise32x32_hermite(double fx, double fy) {
-  return noise_fade<32>(fx, fy, &fade_hermite);
+double noise32x32_hermite(double fx, double fy, uint32_t period) {
+  return noise_fade<32>(fx, fy, &fade_hermite, period);
 }
 
 __attribute__((export_name("noise64x64_hermite")))
-double noise64x64_hermite(double fx, double fy) {
-  return noise_fade<64>(fx, fy, &fade_hermite);
+double noise64x64_hermite(double fx, double fy, uint32_t period) {
+  return noise_fade<64>(fx, fy, &fade_hermite, period);
 }
 
 __attribute__((export_name("noise8x8_quintic")))
-double noise8x8_quintic(double fx, double fy) {
-  return noise_fade<8>(fx, fy, &fade_quintic);
+double noise8x8_quintic(double fx, double fy, uint32_t period) {
+  return noise_fade<8>(fx, fy, &fade_quintic, period);
 }
 
 __attribute__((export_name("noise16x16_quintic")))
-double noise16x16_quintic(double fx, double fy) {
-  return noise_fade<16>(fx, fy, &fade_quintic);
+double noise16x16_quintic(double fx, double fy, uint32_t period) {
+  return noise_fade<16>(fx, fy, &fade_quintic, period);
 }
 
 __attribute__((export_name("noise32x32_quintic")))
-double noise32x32_quintic(double fx, double fy) {
-  return noise_fade<32>(fx, fy, &fade_quintic);
+double noise32x32_quintic(double fx, double fy, uint32_t period) {
+  return noise_fade<32>(fx, fy, &fade_quintic, period);
 }
 
 __attribute__((export_name("noise64x64_quintic")))
-double noise64x64_quintic(double fx, double fy) {
-  return noise_fade<64>(fx, fy, &fade_quintic);
+double noise64x64_quintic(double fx, double fy, uint32_t period) {
+  return noise_fade<64>(fx, fy, &fade_quintic, period);
 }
+*/
